@@ -1,0 +1,691 @@
+---
+title: "Estadística Avanzada - A2"
+author: "Leroy Deniz"
+date: "2022-11-14"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80), tidy=TRUE)
+```
+
+\tableofcontents
+
+\newpage
+
+<br><br><br>
+
+# 0 Importación de librerías
+
+------------------------------------------------------------------------
+
+```{r message=FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+<br><br><br>
+
+# 1 Lectura del fichero
+
+------------------------------------------------------------------------
+
+Se carga el contenido del fichero *gpa.csv* utilizando la función *read.csv* y se muestran sus primeros registros junto con los nombres de las columnas y sus tipos.
+
+```{r}
+gpa <- read.csv("gpa.csv", sep=",", dec='.')
+print(head(gpa))
+```
+
+Se muestran más explícitamente los tipos de datos con los que R ha identificado cada columna.
+
+```{r}
+t(t(sapply(gpa,class)))
+```
+
+\newpage
+
+<br><br><br>
+
+# 2 Estadística descriptiva y visualización
+
+------------------------------------------------------------------------
+
+## 2.1 Análisis descriptivo
+
+Se muestra a continuación información relativa al dataset con el que se va a trabajar,
+
+```{r}
+summary(gpa)
+```
+
+La cantidad de registros del dataset es de `r nrow(gpa)` filas (observaciones) con `r length(gpa)` columnas (variables)
+
+\newpage
+
+## 2.2 Visualización
+
+### 2.2.1 Distribución de las variables *sat* y *colgpa*.
+
+```{r}
+ggplot(gpa, aes(sat)) + 
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="#F7766C")+
+  geom_density(aes(fill = sat), alpha = 0.2)+ ggtitle("Distribución de sat")
+```
+
+\newpage
+
+```{r}
+ggplot(gpa, aes(colgpa)) + 
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="#F7766C") +
+  geom_density(aes(fill = colgpa), alpha = 0.2)+ ggtitle("Distribución de colgpa")
+```
+
+\newpage
+
+### 2.2.2 Distribución de la variable 'sat' con respecto a la variable género ('female'), la variable atleta ('athlete') y la raza ('white', 'black').
+
+```{r}
+ggplot(gpa, aes(sat)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = female), alpha = 0.2) +
+  facet_wrap(~ female)+ ggtitle("Distribución de sat en función de female")
+```
+
+\newpage
+
+```{r}
+ggplot(gpa, aes(sat)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = athlete), alpha = 0.2) +
+  facet_wrap(~ athlete)+ ggtitle("Distribución de sat en función de athlete")
+```
+
+\newpage
+
+```{r}
+ggplot(gpa, aes(sat)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = white), alpha = 0.2) +
+  facet_wrap(~ white)+ ggtitle("Distribución de sat en función de white")
+```
+
+\newpage
+
+```{r}
+ggplot(gpa, aes(sat)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = black), alpha = 0.2) +
+  facet_wrap(~ black)+ ggtitle("Distribución de sat en función de black")
+```
+
+\newpage
+
+### 2.2.3 Distribución de la variable 'colgpa' con respecto a la variable género ('female'), la variable atleta ('athlete') y la raza ('white', 'black').
+
+<br>
+
+```{r}
+ggplot(gpa, aes(colgpa)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = female), alpha = 0.2) +
+  facet_wrap(~ female)+ ggtitle("Distribución de colgpa en función de female")
+```
+
+\newpage
+
+```{r}
+ggplot(gpa, aes(colgpa)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = athlete), alpha = 0.2) +
+  facet_wrap(~ athlete)+ ggtitle("Distribución de colgpa en función de athlete")
+```
+
+\newpage
+
+```{r}
+ggplot(gpa, aes(colgpa)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = white), alpha = 0.2) +
+  facet_wrap(~ white)+ ggtitle("Distribución de colgpa en función de white")
+```
+
+\newpage
+
+```{r}
+ggplot(gpa, aes(colgpa)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = black), alpha = 0.2) +
+  facet_wrap(~ black)+ ggtitle("Distribución de colgpa en función de black")
+```
+
+### 2.2.4 Interpretación
+
+A simple vista podríamos afirmar que la distribución de la variable sat con respecto a las cuatro variables con las que se estudia, presenta una distribución centrada, en algunos casos podría, previa verificación, incluso tener una distribución normal.
+
+La variable *colgpa* por el contrario, presenta una desviación hacia la derecha en todos sus distribuciones, lo que podría suponer un desbalanceo de los casos y, por tanto, un sesgo más elevado en comparación con los demás
+
+\newpage
+
+<br><br><br>
+
+# 3 Intervalo de confianza de la media poblacional de la variable *sat* y *colgpa*
+
+------------------------------------------------------------------------
+
+## 3.1 Supuestos
+
+Como se puede apreciar en las gráficas anteriores, la variable *sat* podría llegar a tener una distribución normal, no así *colgpa*, pero de todas formas podemos valernos del Teorema de Límite Central (TLC) que nos asegura que la media de una muestra de tamaño superior se comporta como una distribución normal.
+
+En este caso, como la muestra supera los cuatro mil casos y el TLC establece que esta regla se cumple para muestras superiores a 30, estamos en una situación cómoda para poder apoyarnos en él.
+
+## 3.2 Función de cálculo del intervalo de confianza
+
+```{r}
+# Normal
+IC_norm <- function( x, NC ){
+  n <- length(x)
+  alpha <- 1 / (NC/100)
+  SE <- sd(x) / sqrt(n)
+  
+  z <- qnorm(alpha / 2, lower.tail=TRUE)
+  z_SE <- z*SE
+  Low <- mean(x) - z_SE
+  Up <- mean(x) + z_SE
+  
+  return ( c(Low,Up) )
+}
+
+# Student T
+IC_t <- function( x, NC ){
+  n <- length(x)
+  alpha <- 1 / (NC/100)
+  SE <- sd(x) / sqrt(n)
+  
+  t <- qt(alpha / 2, df = n-1, lower.tail=TRUE)
+  t_SE <- t*SE
+  Low <- mean(x) - t_SE
+  Up <- mean(x) + t_SE
+  
+  return ( c(Low,Up) )
+}
+
+# Por defecto toma el valor para utilizar Nomal
+IC <- function(x, NC, kind="normal") {
+  if(kind == "t"){
+    return (IC_t(x, NC))
+  }else{
+    return (IC_norm(x, NC))
+  }
+}
+```
+
+## 3.3 Intervalo de confianza de la variable sat
+
+```{r}
+sat_IC_90 <- IC(gpa$sat, 90)
+sat_IC_95 <- IC(gpa$sat, 95)
+```
+
+El intervalo de confianza de sat al 90% es [`r sat_IC_90`] y al 95% es [`r sat_IC_95`]
+
+## 3.4 Intervalo de confianza de la variable colgpa
+
+```{r}
+colgpa_IC_90 <- IC(gpa$colgpa, 90)
+colgpa_IC_95 <- IC(gpa$colgpa, 95)
+```
+
+El intervalo de confianza de colgpa al 90% es [`r colgpa_IC_95`] y al 95% es [`r colgpa_IC_95`]
+
+## 3.5 Interpretación
+
+El intervalo de confianza puede interpretarse como un margen de seguridad en los datos obtenidos con un nivel de seguridad. Esto quiere decir que, de realizar el muestreo con un número grande de muestras, sabemos que hay una probabilidad fija de que el valor de la media de toda la población esté en ese intervalo. De esto se desprende que con un nivel de confianza de un 90%, la media estará en el intervalo [`r colgpa_IC_90`], asimismo, con un valor de confianza de 95%, la media estará en [`r colgpa_IC_95`].
+
+\newpage
+
+<br><br><br>
+
+# 4 ¿Ser atleta influye en la nota?
+
+------------------------------------------------------------------------
+
+## 4.1 Análisis visual
+
+```{r}
+ggplot(gpa, aes(colgpa)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = athlete), alpha = 0.2) +
+  facet_wrap(~ athlete)+ ggtitle("Distribución de colgpa en función de athlete")
+```
+
+\newpage
+
+## 4.2 Función para el contraste de medias
+
+```{r}
+contraste_medias <- function (s1, s2, alt, CL) {
+  
+  # Cálculo de Medias
+  mean1 <- mean(s1)
+  mean2 <- mean(s2)
+  
+  # Cálculo del tamaño de la muestra
+  n1 <- length(s1)
+  n2 <- length(s2)
+  
+  # Cálculo de la desviación estándar
+  sd1 <- sd(s1)
+  sd2 <- sd(s2)
+  
+  # Cálculo del nivel de significancia
+  alpha <- (1 - CL / 100)
+  
+  # Cálculo de los grados de libertad (Apartado 5.2.2 de la teoría)
+  denominador <- ( ( sd1^2/n1 )^2/(n1-1) + (sd2^2/n2)^2/(n2-1) )
+  df <- ( ( sd1^2/n1 + sd2^2/n2 )^2 ) / denominador
+  
+  # Cálculo del valor t (z según la distribución normal estandarizada)
+  sb <- sqrt( sd1^2/n1 + sd2^2/n2 )
+  t <- ( mean1-mean2 ) / sb
+  
+  # Evaluación de la condición =
+  if (alt == "bilateral"){
+    t_critical <- qt( alpha/2, df, lower.tail=FALSE )
+    p_value<-pt( abs(t), df, lower.tail=FALSE )*2
+    
+  # Evaluación de la condición <
+  } else if (alt == "<"){
+    t_critical <- qt( alpha, df, lower.tail=TRUE )
+    p_value<-pt( t, df, lower.tail=TRUE )
+    
+  # Evaluación de la condición >
+  }else{ #(alt == ">")
+    t_critical <- qt( alpha, df, lower.tail=FALSE )
+    p_value<-pt( t, df, lower.tail=FALSE )
+  }
+  
+  # Definición del vector resultado
+  vector_data <- c(mean1, mean2, t, t_critical, p_value, alpha, df)
+  names(vector_data) <- c("mean1", "mean2", "t", "t_critical", "p_value", "alpha", "df")
+  return (vector_data)
+}
+```
+
+\newpage
+
+## 4.3 Pregunta de investigación
+
+¿Es igual la nota *colgpa* de los atletas y los no-atletas?
+
+## 4.4 Hipótesis nula y la alternativa
+
+Hipótesis nula: $$ H_0 : \mu_{colgpa \_athletes} = \mu_{colgpa \_non\_athletes} $$ Hipótesis alternativa: $$ H_1 : \mu_{colgpa \_athletes} \neq \mu_{colgpa \_non\_athletes} $$
+
+## 4.5 Justificación del test a aplicar
+
+La razón por la cual se está utilizando este test específico es porque tenemos dos muestras que no abarcan toda la población y por lo tanto no conocemos las varianzas reales, y además, tenemos dos muestras que son independientes (atletas y no atletas, casos disjuntos, misma columna en los datos). De esta forma, se utiliza contraste de medias.
+
+## 4.6 Cálculo
+
+```{r}
+x <- gpa[gpa$athlete == TRUE,]$colgpa
+y <- gpa[gpa$athlete == FALSE,]$colgpa
+datos <- contraste_medias(x, y, "bilateral", 95)
+print(t(t(datos)))
+```
+
+## 4.7 Interpretación del test
+
+Puesto que *p* es significativamente menor que *alpha*, estamos en condiciones de rechazar la hipótesis nula y, por el contrario, decantarnos a favor de la hipótesis alternativa.
+
+Respondiendo a la pregunta de investigación, la respuesta es no, las notas entre atletas y no atletas no son iguales.
+
+\newpage
+
+<br><br><br>
+
+# 5 ¿Las mujeres tienen mejor nota que los hombres?
+
+------------------------------------------------------------------------
+
+## 5.1 Análisis visual
+
+```{r}
+ggplot(gpa, aes(colgpa)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = female), alpha = 0.2) +
+  facet_wrap(~ female)+ ggtitle("Distribución de colgpa en función de female")
+```
+
+## 5.2 Función
+
+La función está definida en el punto 4.2.
+
+## 5.3 Pregunta de investigación
+
+¿La nota de las mujeres es mayor que la de los hombres?
+
+## 5.4 Hipótesis nula y la alternativa
+
+Hipótesis nula: $$ H_0 : \mu_{colgpa \_female} \geq  \mu_{colgpa \_non\_female} $$ Hipótesis alternativa: $$ H_1 : \mu_{colgpa \_female} < \mu_{colgpa \_non\_female} $$
+
+## 5.5 Justificación del test a aplicar
+
+De la misma forma que la pregunta anterior, se aplica un test de contraste de medias para el rechazo o no de la hipótesis nula, puesto que tenemos dos conjuntos de variables independientes y con varianzas reales desconocidas.
+
+## 5.6 Cálculo
+
+Se generan las dos series según la condición requerida.
+
+```{r}
+x <- gpa[gpa$female == TRUE,]$colgpa # mujeresbres
+```
+
+Para un nivel de confianza de un 95%:
+
+```{r}
+datos <- contraste_medias(x, y, ">", 95)
+print(t(t(datos)))
+```
+
+Para un nivel de confianza de un 90%:
+
+```{r}
+datos <- contraste_medias(x, y, ">", 90)
+print(t(t(datos)))
+```
+
+## 5.7 Interpretación del test
+
+Como puede apreciarse en las tablas inmediatamente anteriores, en ambos casos el *p_value* es significativamente menor que el *alpha*, por lo que podemos rechazar la hipótesis nula en favor de la alternativa para ambos niveles de confianza.
+
+Respondiendo a la pregunta de investigación, la media de la nota de las mujeres es menor igual, a la de los hombres.
+
+\newpage
+
+<br><br><br>
+
+# 6 ¿Hay diferencias en la nota según la raza?
+
+------------------------------------------------------------------------
+
+## 6.1 Análisis visual
+
+Para este caso se deben analizar las dos gráficas de la izquierda, cuando la raza es blanca o negra, ignorando los demás datos que, en este estudio, no serían relevantes.
+
+```{r}
+ggplot(gpa, aes(colgpa)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = white), alpha = 0.2) +
+  facet_wrap(~ white)+ ggtitle("Distribución de colgpa en función de white")
+```
+
+\newpage
+
+```{r}
+ggplot(gpa, aes(colgpa)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "black", fill ="white") +
+  geom_density(aes(fill = black), alpha = 0.2) +
+  facet_wrap(~ black)+ ggtitle("Distribución de colgpa en función de black")
+```
+
+## 6.2 Función
+
+La función está definida en el punto 4.2.
+
+## 6.3 Pregunta de investigación
+
+¿Son iguales las notas en ambas razas?
+
+## 6.4 Hipótesis nula y la alternativa
+
+Hipótesis nula: $$ H_0 : \mu_{colgpa \_white} = \mu_{colgpa \_black} $$ Hipótesis alternativa: $$ H_1 : \mu_{colgpa \_white} \neq \mu_{colgpa \_black} $$
+
+## 6.5 Justificación del test a aplicar
+
+De la misma forma que la pregunta anterior, se aplica un test de contraste de medias para el rechazo o no de la hipótesis nula, puesto que lo que se busca es verificar un valor de significancia.
+
+## 6.6 Cálculo
+
+```{r}
+x <- gpa[gpa$white == TRUE,]$colgpa # white
+y <- gpa[gpa$black == TRUE,]$colgpa # black
+```
+
+Para un nivel de confianza de un 95%:
+
+```{r}
+datos <- contraste_medias(x, y, "bilateral", 95)
+print(t(t(datos)))
+```
+
+Como el *p_value* es significativamente menor que *alpha*, podemos rechazar de plano la hipótesis nula y decantarnos por la hipótesis alternativa; es decir, que las notas no son iguales. En tal caso, deberíamos ir un poco más allá e intentar verificar que, si no son iguales, cuál tiene un mayor nivel, por lo que a continuación se realiza un contraste de medias con *x* \< *y*, donde la población de raza blanca tenga notas menores que la de raza negra.
+
+```{r}
+datos <- contraste_medias(x, y, "<", 95)
+print(t(t(datos)))
+```
+
+## 6.7 Interpretación del test
+
+En el segundo test el *p_value* es mayor con respecto al *alpha* para no poder rechazar la nueva hipótesis, por lo que no contamos con información suficiente para asegurar que, la población de raza negra tiene mejores notas que aquella de raza blanca.
+
+\newpage
+
+<br><br><br>
+
+# 7 Proporción de atletas
+
+------------------------------------------------------------------------
+
+Se define una función que calculará el contraste de proporciones con una única distribución.
+
+```{r}
+contraste_proporciones_unidist <- function (p, p0, n, alt, CL) {
+  z <- (p-p0) / ( sqrt(p0*(1-p0)/n))
+  alpha <- 1 - CL/100
+  
+  # Evaluación de la condición =
+  if (alt == "bilateral") {
+    p_value <- pnorm( abs(z), lower.tail=FALSE)*2
+    z_critical <- qnorm( alpha/2,lower.tail=FALSE )
+    
+  # Evaluación de la condición >
+  } else if (alt == ">") {
+    p_value <- pnorm( z, lower.tail=FALSE)
+    z_critical <- qnorm( alpha, lower.tail=FALSE )
+    
+  # Evaluación de la condición <
+  } else if (alt == "<") {
+    p_value <- pnorm(z, lower.tail=TRUE)
+    z_critical <- qnorm(alpha, lower.tail=TRUE )
+    
+  }
+  
+  datos <- c(p, p0, z, z_critical, alpha, p_value)
+  names(datos) <- c("p", "p0", "z", "z_critical", "alpha", "p_value")
+  return (datos)
+}
+```
+
+## 7.1 Análisis visual
+
+```{r}
+# total de atletas
+athletes <- length(gpa[gpa$athlete == TRUE,]$athlete)
+
+# total de la muestra menos los atletas
+non_athletes = length(gpa$colgpa) - athletes
+
+# definición de los vectores para el Pie chart
+proportions <- c(athletes, non_athletes)
+labels <- c(TRUE, FALSE)
+
+# Definición del gráfico
+pie(proportions, labels = labels, main="Proporción de Atletas")
+```
+
+## 7.2 Pregunta de investigación
+
+¿La proporción de atletas es menor al 5% en la muestra?
+
+## 7.3 Hipótesis nula y la alternativa
+
+Hipótesis nula: $$ H_0 : p_{athletes} \leq p_{muestra} $$ Hipótesis alternativa: $$ H_1 : p_{athletes} >q p_{muestra} $$
+
+## 7.4 Justificación del test a aplicar
+
+Se realiza el contraste de proporciones a través de la función del comienzo del apartado, cuya firma establece los parámetros necesarios para poder realizar el procedimiento, devolviendo como resultado los valores que nos permitan rechazar la hipótesis nula o no. La función permite el contraste de proporciones con una única distribución, cuya proporción se contraste con un valor fijo.
+
+## 7.5 Realizad los cálculos del test
+
+```{r}
+n <- athletes+non_athletes
+p_athletes <- athletes/n
+datos <- contraste_proporciones_unidist( p_athletes, 0.05, n, "<", 95 )
+print(t(t(datos)))
+```
+
+\newpage
+
+## 7.6 Interpretación del test
+
+Como el *p_value* es mayor que *alpha*, no podemos rechazar la hipótesis nula puesto que el error que cometeríamos es suficientemente grande. Eso nos permite responder a la pregunta de investigación con un sí, la proporción de atletas es menor al 5%.
+
+\newpage
+
+<br><br><br>
+
+# 8 ¿Hay más atletas entre los hombres que entre las mujeres?
+
+------------------------------------------------------------------------
+
+Función para la aplicación de controste de proporciones con dos distribuciones.
+
+```{r}
+contraste_proporciones_bidist <- function (p1, p2, n1, n2, alt, CL) {
+  p <- (n1*p1 + n2*p2) / (n1+n2)
+  z <- (p1-p2) / ( sqrt(p*(1-p)*(1/n1+1/n2)))
+  alpha <- 1 - CL/100
+  
+  # Evaluación de la condición =
+  if (alt == "bilateral") {
+    p_value <- pnorm( abs(z), lower.tail=FALSE)*2
+    z_critical <- qnorm( alpha/2,lower.tail=FALSE )
+    
+  # Evaluación de la condición >
+  } else if (alt == ">") {
+    p_value <- pnorm( z, lower.tail=FALSE)
+    z_critical <- qnorm( alpha, lower.tail=FALSE )
+    
+  # Evaluación de la condición <
+  } else if (alt == "<") {
+    p_value <- pnorm(z, lower.tail=TRUE)
+    z_critical <- qnorm(alpha, lower.tail=TRUE )
+    
+  }
+  
+  datos <- c(p1, p2, z, z_critical, alpha, p_value)
+  names(datos) <- c("p1", "p2", "z", "z_critical", "alpha", "p_value")
+  return (datos)
+}
+```
+
+## 8.1 Análisis visual
+
+```{r}
+# total de atletas
+athletes_female <- length(gpa[gpa$athlete == TRUE & gpa$female == TRUE,]$female)
+non_athletes_female <- length(gpa[gpa$athlete == FALSE & gpa$female == TRUE,]$female)
+
+# total de la muestra menos los atletas
+athletes_male = length(gpa[gpa$athlete == TRUE & gpa$female == FALSE,]$female)
+non_athletes_male = length(gpa[gpa$athlete == FALSE & gpa$female == FALSE,]$female)
+
+# definición de los vectores para el Pie chart
+proportions <- c(athletes_female, non_athletes_female)
+labels <- c("Female & Athelte", "Female & Non-Athelte")
+
+# Definición del gráfico
+pie(proportions, labels = labels, main="Proporción de mujeres atletas")
+
+
+# definición de los vectores para el Pie chart
+proportions <- c(athletes_male, non_athletes_male)
+labels <- c("Male & Athelte", "Male & Non-Athelte")
+
+# Definición del gráfico
+pie(proportions, labels = labels, main="Proporción de hombres atletas")
+```
+
+## 8.2 Pregunta de investigación
+
+¿La proporción de hombres atletas es mayor que la proporción entre las mujeres?
+
+## 8.3 Hipótesis nula y la alternativa
+
+Hipótesis nula: $$ H_0 : p_{athletes\_female} \geq p_{athletes\_male} $$ Hipótesis alternativa: $$ H_1 : p_{athletes\_female} < p_{athletes\_male} $$
+
+## 8.4 Justificación del test a aplicar
+
+Se realiza el contraste de proporciones a través de la función *contraste_proporciones_bidist* del comienzo del apartado, cuya firma establece los parámetros necesarios para poder realizar el procedimiento, devolviendo como resultado los valores que nos permitan rechazar la hipótesis nula o no. Como se tiene que estudiar la proporción en dos distribuciones distintas, independientes y diferentes tamaños, se utiliza este test específico de proporciones de dos distribuciones.
+
+## 8.5 Realizad los cálculos del test
+
+```{r}
+n1 <- athletes_male + non_athletes_male
+n2 <- athletes_female + non_athletes_female
+  
+p1 <- athletes_male / n1
+p2 <- athletes_female / n2
+
+datos <- contraste_proporciones_bidist(p1, p2, n1, n2, "<", 95 )
+print(t(t(datos)))
+```
+
+## 8.6 Interpretación del test
+
+Tal como podía preverse a partir de las gráficas del apartado 1, la proporción de hombres atletas es mayor que la de mujeres atletas, lo que se ve confirmado a través del test de contraste de proporciones anterior, cuyo *p_value* es mayor que el *alpha*, por lo que no podemos rechazar la hipótesis nula puesto que el error que cometeríamos sería significativamente mayor.
+
+\newpage
+
+<br><br><br>
+
+# 9 Resumen y conclusiones
+
+------------------------------------------------------------------------
+
+<br><br>
+
+| N   | Pregunta                                                             | Resultado                                                                                                  | Conclusión                                                                                                                                                                                                                                                                                |
+|---------------|-----------------|-------------------|---------------------|
+| P1  | ¿Cuál es el intervalo de confianza de la nota entre los estudiantes? | *sat*: [ 1030.028 1030.634 ], [ 1030.188 1030.474 ], *colgpa*: [ 2.652702 2.65556 ], [ 2.653456 2.654806 ] | El intervalo de confianza de *sat* al 95% es [ 1030.188 1030.474 ]. El intervalo de confianza de *sat* al 90% es [ 1030.028 1030.634 ]. El intervalo de confianza de *colgpa* al 95% es [ 2.653456 2.654806 ]. El intervalo de confianza de *colgpa* al 90% es [ 2.652702 2.65556 ]. <br> |
+| P2  | ¿Ser atleta influye en la nota?                                      | p_value \<- 6.828951e-10, alpha \<- 5.000000e-02                                                           | Las notas no son iguales. Se rechaza la hipótesis nula. <br>                                                                                                                                                                                                                              |
+| P3  | ¿Las mujeres obtienen mejor nota que los hombres?                    | p_value \<- 1.154434e-04, alpha \<- 5.000000e-02                                                           | La media de la nota de las mujeres es menor igual, a la de los hombres. Se rechaza la hipótesis nula. <br>                                                                                                                                                                                |
+| P4  | ¿Hay diferencias significativas en la nota según la raza?            | p_value \<- 2.214163e-20, alpha \<- 5.000000e-02                                                           | La población de raza negra tiene mejores notas que aquella de raza blanca. Se rechaza la hipótesis nula. <br>                                                                                                                                                                             |
+| P5  | ¿La proporción de atletas en la población es inferior al 5%?         | p_value \<- 0.17965749, alpha \<- 0.05000000                                                               | La proporción de atletas es menor al 5%. Se acepta la hipótesis nula. <br>                                                                                                                                                                                                                |
+| P6  | ¿Hay más atletas entre los hombres que entre las mujeres?            | p_value \<- 1.00000000, alpha \<- 0.05000000                                                               | La proporción de atletas hombres es mayor al de mujeres atletas. Se acepta la hipótesis nula.                                                                                                                                                                                             |
+
+\newpage
+
+<br><br><br>
+
+# 10 Resumen ejecutivo
+
+------------------------------------------------------------------------
+
+La masividad en los datos que comúnmente se obtienen en todas las esferas de la sociedad facilita la toma de decisiones y el reconocimiento de situaciones a corregir o a promover. Sin embargo, la información implícita en ellos es la que más valor proporciona, puesto que el conjunto de datos es quien debe responder a las tendencias y no cada caso aislado.
+
+La utilización de métodos estadísticos permite escalar esta obtención de infomación somera a datos intrínsecos, capaces de dibujar una realidad que pudiera ser desoconocida o, al menos, pensada. Es por esta razón que, al utilizar test de verificaciones como los que se utilizan en esta práctica, se es capaz de dar ciertas afirmaciones por buenas bajo un nivel de confianza suficientemente alto.
+
+La pregunta 4, por ejemplo, es capaz de comparar dos medias de series distintas, completamente desbalanceadas, ya que los casos de atletas representan menos del 5% del total de la muestra. Los datos pudieran verse afectados por otros factores que quizá no están siendo tomados en cuenta, sin embargo, bajo las condiciones en las que se establecen, se considera una representación de la población total.
+
+La pregunta 6 que busca confirmar la igualdad de las notas entre la raza blanca y la raza negra, tiene un resultado de lo más peculiar, puesto que en el enunciado se podría dar a entender que, de no ser iguales, pudiera verse sesgado a situaciones sociales no consideradas en este juego datos. Sin embargo la sorpresa llegó cuando en realidad, los test arrojarían resultados que la media de estudiantes de raza negra tiene mejores notas que aquellos de raza blanca. Podríamos, quizás, echar así por tierra la existencia de factores ajenos al contexto o, al menos, asumir que no son lo suficientemente influyentes.
+
+Finalmente, es importante destacar que se considera que esta muestra, sobre la cual se establecen los test que facilitan la información extraída de los datos, es lo suficientemente representativa como para poder generalizar estos resultados frente al resto de la población.
+
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
